@@ -118,7 +118,7 @@ jobs:
         run: npm run build
 
       - name: Publish to GitHub Packages
-        run: npm run publish:github
+        run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
