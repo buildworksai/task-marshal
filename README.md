@@ -246,6 +246,25 @@ Comprehensive audit trail with compliance reporting and security monitoring.
 
 ### Quick Start
 
+#### From NPM Registry
+```bash
+# Install from NPM
+npm install @buildworksai/task-marshal
+
+# Or install globally
+npm install -g @buildworksai/task-marshal
+```
+
+#### From GitHub Package Registry
+```bash
+# Configure npm for GitHub Packages
+echo "@buildworksai:registry=https://npm.pkg.github.com" >> .npmrc
+
+# Install from GitHub Packages
+npm install @buildworksai/task-marshal
+```
+
+#### From Source
 ```bash
 # Clone the repository
 git clone https://github.com/buildworksai/task-marshal.git
@@ -486,6 +505,37 @@ interface MarshalProjectsParams {
 - **GDPR**: Data protection and privacy compliance
 - **HIPAA**: Healthcare data protection (if applicable)
 - **ISO 27001**: Information security management
+
+## Publishing
+
+Task-Marshal is published to both NPM and GitHub Package Registry for maximum availability.
+
+### Package Information
+
+- **NPM Registry**: [@buildworksai/task-marshal](https://www.npmjs.com/package/@buildworksai/task-marshal)
+- **GitHub Packages**: [@buildworksai/task-marshal](https://github.com/buildworksai/task-marshal/packages)
+
+### Publishing Process
+
+The package is automatically published via GitHub Actions when:
+- Pushing to the `main` branch
+- Creating version tags (e.g., `v1.0.0`)
+- Manual workflow dispatch
+
+For detailed publishing instructions, see [PUBLISHING.md](PUBLISHING.md).
+
+### Version Management
+
+```bash
+# Patch version (1.0.0 -> 1.0.1)
+npm run version:patch
+
+# Minor version (1.0.0 -> 1.1.0)
+npm run version:minor
+
+# Major version (1.0.0 -> 2.0.0)
+npm run version:major
+```
 
 ## Contributing
 
