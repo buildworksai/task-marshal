@@ -33,6 +33,7 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
+          registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
         run: npm ci
@@ -62,13 +63,13 @@ jobs:
             echo "Published version: ${PUBLISHED}"
             if [ "$CURRENT" != "$PUBLISHED" ]; then
               echo "Publishing new version ${CURRENT} to npm..."
-              npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
+              npm publish --loglevel=verbose
             else
               echo "Skip npmjs publish: ${CURRENT} already published"
             fi
           else
             echo "Package not found on npm, publishing first version ${CURRENT}..."
-            npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
+            npm publish --loglevel=verbose
           fi
 
       - name: Configure GitHub Packages registry
