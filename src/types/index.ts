@@ -425,9 +425,9 @@ export const MarshalTasksParamsSchema = z.object({
 
 export class TaskMarshalError extends Error {
   constructor(
-    public code: string,
+    public _code: string,
     message: string,
-    public details?: Record<string, unknown>
+    public _details?: Record<string, unknown>
   ) {
     super(message);
     this.name = 'TaskMarshalError';

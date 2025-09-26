@@ -5,13 +5,13 @@
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
-import { TaskMarshalConfig, AuditLogger } from '../types/index.js';
+import { TaskMarshalConfig, AuditLog } from '../types/index.js';
 
 export class MarshalAuditTool {
   constructor(
-    private config: TaskMarshalConfig,
-    private logger: winston.Logger,
-    private auditLogger: AuditLogger
+    private _config: TaskMarshalConfig,
+    private _logger: winston.Logger,
+    private _auditLogger: AuditLog
   ) {}
 
   getToolDefinition(): Tool {

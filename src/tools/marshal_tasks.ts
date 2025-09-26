@@ -11,10 +11,6 @@ import {
   MarshalTasksParams, 
   Task, 
   TaskMarshalResponse,
-  ValidationUtils,
-  SecurityUtils,
-  AuditLogger,
-  TaskMarshalError,
   NotFoundError,
   ValidationError
 } from '../types/index.js';
@@ -23,21 +19,19 @@ import {
  * Marshal Tasks Tool - Core task orchestration with AI capabilities
  */
 export class MarshalTasksTool {
-  private config: TaskMarshalConfig;
-  private logger: winston.Logger;
-  private auditLogger: AuditLogger;
-  private securityUtils: SecurityUtils;
+  private _config: TaskMarshalConfig;
+  private _logger: winston.Logger;
+  private _auditLogger: AuditLog;
   private tasks: Map<string, Task> = new Map();
 
   constructor(
     config: TaskMarshalConfig,
     logger: winston.Logger,
-    auditLogger: AuditLogger
+    auditLogger: AuditLog
   ) {
-    this.config = config;
-    this.logger = logger.child({ tool: 'marshal_tasks' });
-    this.auditLogger = auditLogger;
-    this.securityUtils = new SecurityUtils(config);
+    this._config = config;
+    this._logger = logger.child({ tool: 'marshal_tasks' });
+    this._auditLogger = auditLogger;
   }
 
   /**
@@ -561,7 +555,7 @@ export class MarshalTasksTool {
   /**
    * Extract assignee from natural language
    */
-  private extractAssignee(input: string): string | undefined {
+  private extractAssignee(_input: string): string | undefined {
     // TODO: Implement team member name resolution
     // For now, return undefined
     return undefined;

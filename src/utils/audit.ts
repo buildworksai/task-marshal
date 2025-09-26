@@ -475,9 +475,9 @@ export class AuditLogger {
   private sanitizeError(error: unknown): unknown {
     if (error instanceof TaskMarshalError) {
       return {
-        code: error.code,
+        code: error._code,
         message: error.message,
-        details: error.details,
+        details: error._details,
       };
     }
     

@@ -8,9 +8,7 @@ import {
   MarshalTasksParamsSchema,
   TaskSchema,
   ProjectSchema,
-  MarshalTasksParams,
-  ValidationError,
-  TaskMarshalError 
+  ValidationError
 } from '../types/index.js';
 
 /**

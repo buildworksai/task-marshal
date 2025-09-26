@@ -8,8 +8,6 @@ import bcrypt from 'bcryptjs';
 import { 
   User, 
   Session, 
-  Permission, 
-  Role,
   AuthenticationError,
   AuthorizationError,
   TaskMarshalConfig 
@@ -205,7 +203,7 @@ export class SecurityUtils {
    * Generate UUID v4
    */
   generateUUID(): string {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = Math.random() * 16 | 0;
       const v = c === 'x' ? r : (r & 0x3 | 0x8);
       return v.toString(16);
@@ -254,12 +252,11 @@ export class SecurityUtils {
     requestCounts: Map<string, { count: number; resetTime: number }>
   ): boolean {
     const now = Date.now();
-    const windowStart = now - windowMs;
     
     // Clean up expired entries
-    for (const [key, value] of requestCounts.entries()) {
+    for (const [_key, value] of requestCounts.entries()) {
       if (value.resetTime < now) {
-        requestCounts.delete(key);
+        requestCounts.delete(_key);
       }
     }
     
@@ -291,7 +288,7 @@ export class SecurityUtils {
   /**
    * Encrypt sensitive data
    */
-  encryptData(data: string, key: string): string {
+  encryptData(data: string, _key: string): string {
     // TODO: Implement proper encryption
     // For now, return base64 encoded data
     return Buffer.from(data).toString('base64');
@@ -300,7 +297,7 @@ export class SecurityUtils {
   /**
    * Decrypt sensitive data
    */
-  decryptData(encryptedData: string, key: string): string {
+  decryptData(encryptedData: string, _key: string): string {
     // TODO: Implement proper decryption
     // For now, return base64 decoded data
     return Buffer.from(encryptedData, 'base64').toString('utf-8');
