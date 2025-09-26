@@ -37,9 +37,6 @@
     "dist",
     "tests",
     "**/*.test.ts",
-    "**/*.spec.ts",
-    "src/tools/**/*",
-    "src/utils/**/*",
-    "src/types/**/*"
+    "**/*.spec.ts"
   ]
 }

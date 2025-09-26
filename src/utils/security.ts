@@ -43,7 +43,7 @@ export class SecurityUtils {
   /**
    * Generate JWT token
    */
-  generateToken(user: User, expiresIn: string = '24h'): string {
+  generateToken(user: User, expiresIn: number = 86400): string {
     const payload = {
       userId: user.id,
       email: user.email,
@@ -52,11 +52,13 @@ export class SecurityUtils {
       permissions: user.permissions.map(p => p.name),
     };
 
-    return jwt.sign(payload, this.jwtSecret, { 
+    const options: jwt.SignOptions = {
       expiresIn,
       issuer: 'task-marshal',
       audience: 'task-marshal-client',
-    });
+    };
+
+    return jwt.sign(payload, this.jwtSecret, options);
   }
 
   /**

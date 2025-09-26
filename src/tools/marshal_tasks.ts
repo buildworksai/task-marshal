@@ -14,6 +14,8 @@ import {
   NotFoundError,
   ValidationError
 } from '../types/index.js';
+import { ValidationUtils } from '../utils/validation.js';
+import { AuditLogger } from '../utils/audit.js';
 
 /**
  * Marshal Tasks Tool - Core task orchestration with AI capabilities
@@ -21,13 +23,13 @@ import {
 export class MarshalTasksTool {
   private _config: TaskMarshalConfig;
   private _logger: winston.Logger;
-  private _auditLogger: AuditLog;
+  private _auditLogger: AuditLogger;
   private tasks: Map<string, Task> = new Map();
 
   constructor(
     config: TaskMarshalConfig,
     logger: winston.Logger,
-    auditLogger: AuditLog
+    auditLogger: AuditLogger
   ) {
     this._config = config;
     this._logger = logger.child({ tool: 'marshal_tasks' });
@@ -130,7 +132,7 @@ export class MarshalTasksTool {
    * Execute the marshal_tasks tool
    */
   async execute(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    this.logger.info('Executing marshal_tasks', { 
+    this._logger.info('Executing marshal_tasks', { 
       action: params.action, 
       requestId,
       hasNaturalLanguage: !!params.naturalLanguage 
@@ -163,7 +165,7 @@ export class MarshalTasksTool {
           throw new ValidationError(`Invalid action: ${params.action}`);
       }
     } catch (error) {
-      this.logger.error('Error executing marshal_tasks', {
+      this._logger.error('Error executing marshal_tasks', {
         error: error instanceof Error ? error.message : 'Unknown error',
         requestId,
         params,
@@ -217,7 +219,7 @@ export class MarshalTasksTool {
     // Store task
     this.tasks.set(taskId, task);
 
-    this.logger.info('Task created successfully', { 
+    this._logger.info('Task created successfully', { 
       taskId, 
       title: task.title,
       priority: task.priority,
@@ -263,7 +265,7 @@ export class MarshalTasksTool {
     // Store updated task
     this.tasks.set(updatedTask.id, updatedTask);
 
-    this.logger.info('Task updated successfully', { 
+    this._logger.info('Task updated successfully', { 
       taskId: updatedTask.id,
       requestId 
     });
@@ -303,7 +305,7 @@ export class MarshalTasksTool {
 
     this.tasks.set(task.id, task);
 
-    this.logger.info('Task assigned successfully', { 
+    this._logger.info('Task assigned successfully', { 
       taskId: task.id,
       assignee: task.assignee,
       requestId 
@@ -344,7 +346,7 @@ export class MarshalTasksTool {
 
     this.tasks.set(task.id, task);
 
-    this.logger.info('Task completed successfully', { 
+    this._logger.info('Task completed successfully', { 
       taskId: task.id,
       requestId 
     });
@@ -377,7 +379,7 @@ export class MarshalTasksTool {
       recommendations: await this.generateRecommendations(tasks),
     };
 
-    this.logger.info('Task analysis completed', { 
+    this._logger.info('Task analysis completed', { 
       totalTasks: analysis.totalTasks,
       requestId 
     });
@@ -413,7 +415,7 @@ export class MarshalTasksTool {
       },
     };
 
-    this.logger.info('Tasks listed successfully', { 
+    this._logger.info('Tasks listed successfully', { 
       totalTasks: tasks.length,
       returnedTasks: paginatedTasks.length,
       requestId 

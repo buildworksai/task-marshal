@@ -30,9 +30,6 @@
   "ignorePatterns": [
     "dist/",
     "node_modules/",
-    "*.js",
-    "src/tools/",
-    "src/utils/",
-    "src/types/"
+    "*.js"
   ]
 }
