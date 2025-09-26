@@ -55,12 +55,20 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           CURRENT=$(node -p "require('./package.json').version")
-          PUBLISHED=$(npm view @buildworksai/task-marshal version || echo '0.0.0')
-          echo "npmjs current=${CURRENT} published=${PUBLISHED}"
-          if [ "$CURRENT" != "$PUBLISHED" ]; then
-            npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
+          echo "Current version: ${CURRENT}"
+          
+          # Check if package exists and get published version
+          if PUBLISHED=$(npm view @buildworksai/task-marshal version 2>/dev/null); then
+            echo "Published version: ${PUBLISHED}"
+            if [ "$CURRENT" != "$PUBLISHED" ]; then
+              echo "Publishing new version ${CURRENT} to npm..."
+              npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
+            else
+              echo "Skip npmjs publish: ${CURRENT} already published"
+            fi
           else
-            echo "Skip npmjs publish: ${CURRENT} already published"
+            echo "Package not found on npm, publishing first version ${CURRENT}..."
+            npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
           fi
 
       - name: Configure GitHub Packages registry
