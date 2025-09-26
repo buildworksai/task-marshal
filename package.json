@@ -22,7 +22,7 @@
     "docker:run": "docker run -p 3000:3000 buildworksai/task-marshal",
     "docker:dev": "docker-compose up -d",
     "publish:npm": "npm publish --registry=https://registry.npmjs.org --access public",
-    "publish:github": "npm publish --registry=https://npm.pkg.github.com",
+    "publish:github": "npm publish",
     "publish:both": "npm run publish:npm && npm run publish:github",
     "version:patch": "npm version patch",
     "version:minor": "npm version minor",
@@ -92,8 +92,5 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
-  },
-  "publishConfigGitHub": {
-    "registry": "https://npm.pkg.github.com"
   }
 }

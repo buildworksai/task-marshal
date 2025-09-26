@@ -18,6 +18,10 @@ on:
           - github
           - both
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   NODE_VERSION: '18'
   REGISTRY_NPM: 'https://registry.npmjs.org'
