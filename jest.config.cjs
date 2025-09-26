@@ -1,5 +1,6 @@
 /** @type {import('jest').Config} */
-export default {
+module.exports = {
+  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
   testMatch: [
@@ -11,4 +12,11 @@ export default {
   },
   testTimeout: 10000,
   verbose: true,
+  moduleFileExtensions: ['ts', 'js', 'json'],
+  collectCoverageFrom: [
+    'src/**/*.ts',
+    '!src/**/*.d.ts',
+  ],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
 };
