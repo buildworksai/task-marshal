@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "BuildWorks.AI Task-Marshal MCP Tools: A production-ready MCP server providing intelligent task management, project orchestration, and team collaboration via stdio.",
   "main": "dist/server.js",
+  "bin": {
+    "task-marshal": "dist/server.js"
+  },
   "type": "module",
   "scripts": {
     "build": "tsc --skipLibCheck",

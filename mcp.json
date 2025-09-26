@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "task-marshal": {
+      "command": "npx",
+      "args": ["buildworks-ai-task-marshal"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
