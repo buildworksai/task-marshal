@@ -1,0 +1,63 @@
+{
+  "examples": [
+    {
+      "name": "Create Task with Natural Language",
+      "description": "Create a task using natural language processing",
+      "tool": "marshal_tasks",
+      "arguments": {
+        "action": "create",
+        "naturalLanguage": "Create a high-priority bug fix task for the authentication module, assign to the security team, due by end of week"
+      }
+    },
+    {
+      "name": "List Tasks with Filters",
+      "description": "List tasks with specific filters",
+      "tool": "marshal_tasks",
+      "arguments": {
+        "action": "list",
+        "filters": {
+          "status": ["pending", "in-progress"],
+          "priority": ["high", "critical"],
+          "assignee": ["user-123"]
+        },
+        "limit": 10,
+        "offset": 0
+      }
+    },
+    {
+      "name": "Analyze Task Performance",
+      "description": "Get analytics and insights about tasks",
+      "tool": "marshal_tasks",
+      "arguments": {
+        "action": "analyze",
+        "filters": {
+          "projectId": ["project-alpha"]
+        }
+      }
+    },
+    {
+      "name": "Update Task Status",
+      "description": "Update a task's status and metadata",
+      "tool": "marshal_tasks",
+      "arguments": {
+        "action": "update",
+        "task": {
+          "id": "task-123",
+          "status": "in-progress",
+          "assignee": "user-456"
+        }
+      }
+    },
+    {
+      "name": "Complete Task",
+      "description": "Mark a task as completed",
+      "tool": "marshal_tasks",
+      "arguments": {
+        "action": "complete",
+        "task": {
+          "id": "task-123"
+        }
+      }
+    }
+  ]
+}
