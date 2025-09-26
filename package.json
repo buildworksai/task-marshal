@@ -16,7 +16,7 @@
     "type-check": "tsc --noEmit --skipLibCheck",
     "clean": "rm -rf dist",
     "prebuild": "npm run clean",
-    "prepublishOnly": "npm run build && npm run lint",
+    "prepublishOnly": "npm run build && npm run lint && npm run test",
     "migrate:from-taskmaster": "tsx scripts/migrate-from-taskmaster.ts",
     "docker:build": "docker build -t buildworksai/task-marshal .",
     "docker:run": "docker run -p 3000:3000 buildworksai/task-marshal",
