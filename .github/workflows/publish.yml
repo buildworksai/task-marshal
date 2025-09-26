@@ -66,7 +66,7 @@ jobs:
           echo "Publishing version ${CURRENT} to npm..."
           npm publish --registry=https://registry.npmjs.org --access public --loglevel=verbose
           
-          echo "✅ Successfully published to npm: https://www.npmjs.com/package/@buildworksai/task-marshal"
+          echo "✅ Successfully published to npm: https://www.npmjs.com/package/buildworks-ai-task-marshal"
 
       - name: Publish to GitHub Packages
         if: github.event.inputs.registry == 'github' || github.event.inputs.registry == 'both'
@@ -90,5 +90,5 @@ jobs:
       - name: Notify completion
         run: |
           echo "✅ Task-Marshal publishing workflow completed!"
-          echo "📦 NPM: https://www.npmjs.com/package/@buildworksai/task-marshal"
+          echo "📦 NPM: https://www.npmjs.com/package/buildworks-ai-task-marshal"
           echo "📦 GitHub: https://github.com/buildworksai/task-marshal/packages"
