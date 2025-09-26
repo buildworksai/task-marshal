@@ -58,6 +58,16 @@ jobs:
           CURRENT=$(node -p "require('./package.json').version")
           echo "Current version: ${CURRENT}"
           
+          # Temporarily move .npmrc to avoid GitHub Packages registry conflict
+          if [ -f .npmrc ]; then
+            mv .npmrc .npmrc.backup
+          fi
+          
+          # Create temporary .npmrc for npm registry
+          echo "registry=https://registry.npmjs.org/" > .npmrc
+          echo "//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+          echo "always-auth=true" >> .npmrc
+          
           # Check if package exists and get published version
           if PUBLISHED=$(npm view @buildworksai/task-marshal version 2>/dev/null); then
             echo "Published version: ${PUBLISHED}"
@@ -70,6 +80,13 @@ jobs:
           else
             echo "Package not found on npm, publishing first version ${CURRENT}..."
             npm publish --loglevel=verbose
+          fi
+          
+          # Restore original .npmrc
+          if [ -f .npmrc.backup ]; then
+            mv .npmrc.backup .npmrc
+          else
+            rm -f .npmrc
           fi
 
       - name: Configure GitHub Packages registry
