@@ -8,7 +8,7 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc --skipLibCheck",
+    "build": "tsc --skipLibCheck && chmod +x dist/server.js",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
     "test": "jest",
