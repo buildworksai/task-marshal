@@ -2,7 +2,7 @@
   "mcpServers": {
     "task-marshal": {
       "command": "npx",
-      "args": ["buildworks-ai-task-marshal"],
+      "args": ["buildworks-ai-task-marshal@1.0.5"],
       "env": {
         "NODE_ENV": "production"
       }

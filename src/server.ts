@@ -201,7 +201,7 @@ const tools: Tool[] = [
 const server = new Server(
   {
     name: 'task-marshal',
-    version: '1.0.3',
+    version: '1.0.5',
   },
   {
     capabilities: {
@@ -239,7 +239,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         requestId
       },
       metadata: {
-        version: '1.0.3',
+        version: '1.0.5',
         buildworks: 'BuildWorks.AI Task-Marshal MCP Server'
       }
     };
