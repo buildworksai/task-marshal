@@ -1,6 +1,8 @@
 /**
  * Marshal Tasks Tool - Core Task Orchestration
  * BuildWorks.AI - Intelligent task management with NLP and automation
+ * 
+ * Note: This class is used by the MCP server but not directly imported to avoid circular dependencies
  */
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -20,6 +22,7 @@ import { AuditLogger } from '../utils/audit.js';
 /**
  * Marshal Tasks Tool - Core task orchestration with AI capabilities
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class MarshalTasksTool {
   private _config: TaskMarshalConfig;
   private _logger: winston.Logger;

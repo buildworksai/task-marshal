@@ -16,6 +16,7 @@ import {
 /**
  * Security utility class for Task-Marshal
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class SecurityUtils {
   private config: TaskMarshalConfig;
   private jwtSecret: string;

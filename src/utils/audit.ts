@@ -10,6 +10,7 @@ import { TaskMarshalConfig, AuditLog, TaskMarshalError } from '../types/index.js
 /**
  * Audit Logger class for Task-Marshal
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class AuditLogger {
   private logger: winston.Logger;
   private config: TaskMarshalConfig;

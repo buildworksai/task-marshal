@@ -14,6 +14,7 @@ import {
 /**
  * Validation utility class for Task-Marshal
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export class ValidationUtils {
   /**
    * Validate tool arguments based on tool name
