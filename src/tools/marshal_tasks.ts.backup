@@ -19,6 +19,8 @@ import { ValidationUtils } from '../utils/validation.js';
 import { AuditLogger } from '../utils/audit.js';
 import { FilesystemManager } from '../utils/filesystem.js';
 import { JournalManager } from '../utils/journal.js';
+import { DependencyManager } from '../utils/dependencies.js';
+import { Task, Initiative, DependencyContract, Subtask } from '../types/enhanced.js';
 
 /**
  * Marshal Tasks Tool - Core task orchestration with filesystem persistence
@@ -29,8 +31,8 @@ export class MarshalTasksTool {
   private _auditLogger: AuditLogger;
   private filesystem: FilesystemManager;
   private journal: JournalManager;
+  private dependencies: DependencyManager;
   private rollbackMode: boolean = false;
-  private tasks: Map<string, any> = new Map();
 
   constructor(
     config: TaskMarshalConfig,
@@ -46,7 +48,8 @@ export class MarshalTasksTool {
       rootDir: process.env.TASK_MARSHAL_DATA_DIR || '.taskmarshal',
       signingKey
     });
-    this.journal = new JournalManager({ rootDir: process.env.TASK_MARSHAL_DATA_DIR || '.taskmarshal' });
+    this.journal = new JournalManager();
+    this.dependencies = new DependencyManager();
   }
 
   /**
@@ -74,34 +77,75 @@ export class MarshalTasksTool {
           },
           task: {
             type: 'object',
+            description: 'Task data for create/update operations',
             properties: {
-              id: { type: 'string' },
-              title: { type: 'string' },
-              description: { type: 'string' },
-              priority: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] },
-              status: { type: 'string', enum: ['pending', 'in-progress', 'completed', 'cancelled'] },
-              assignee: { type: 'string' },
-              dueDate: { type: 'string', format: 'date-time' },
-              tags: { type: 'array', items: { type: 'string' } },
-              projectId: { type: 'string' },
-              dependencies: { type: 'array', items: { type: 'string' } },
-              initiativeId: { type: 'string' },
+              title: { type: 'string', description: 'Task title' },
+              description: { type: 'string', description: 'Task description' },
+              priority: { 
+                type: 'string', 
+                enum: ['low', 'medium', 'high', 'critical'],
+                description: 'Task priority level'
+              },
+              assignee: { type: 'string', description: 'User ID of assignee' },
+              dueDate: { type: 'string', format: 'date-time', description: 'Task due date' },
+              tags: { 
+                type: 'array', 
+                items: { type: 'string' },
+                description: 'Task tags for categorization'
+              },
+              projectId: { type: 'string', description: 'Associated project ID' },
+              dependencies: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Task dependency IDs'
+              }
             }
           },
-          naturalLanguage: { type: 'string', description: 'Natural language description of the task to create' },
+          naturalLanguage: {
+            type: 'string',
+            description: 'Natural language description for AI-powered task creation. Example: "Create a high-priority bug fix task for the authentication module, assign to the security team, due by end of week"'
+          },
+          sessionId: {
+            type: 'string',
+            description: 'Session ID for tracking and context'
+          },
           filters: {
             type: 'object',
+            description: 'Filters for task listing and analysis',
             properties: {
-              status: { type: 'array', items: { type: 'string' } },
-              priority: { type: 'array', items: { type: 'string' } },
+              status: {
+                type: 'array',
+                items: { type: 'string', enum: ['pending', 'in-progress', 'completed', 'cancelled'] }
+              },
+              priority: {
+                type: 'array',
+                items: { type: 'string', enum: ['low', 'medium', 'high', 'critical'] }
+              },
               assignee: { type: 'array', items: { type: 'string' } },
-              initiativeId: { type: 'string' },
-              tags: { type: 'array', items: { type: 'string' } }
+              projectId: { type: 'array', items: { type: 'string' } },
+              tags: { type: 'array', items: { type: 'string' } },
+              dueDate: {
+                type: 'object',
+                properties: {
+                  from: { type: 'string', format: 'date-time' },
+                  to: { type: 'string', format: 'date-time' }
+                }
+              }
             }
           },
-          limit: { type: 'number' },
-          offset: { type: 'number' },
-          sessionId: { type: 'string' }
+          limit: {
+            type: 'number',
+            minimum: 1,
+            maximum: 100,
+            default: 20,
+            description: 'Maximum number of tasks to return'
+          },
+          offset: {
+            type: 'number',
+            minimum: 0,
+            default: 0,
+            description: 'Number of tasks to skip'
+          }
         },
         required: ['action']
       }
@@ -159,7 +203,7 @@ export class MarshalTasksTool {
       return await this.createTaskInMemory(params, requestId);
     }
 
-    let taskData: any;
+    let taskData: Partial<Task>;
 
     if (params.naturalLanguage) {
       taskData = await this.parseNaturalLanguageTask(params.naturalLanguage);
@@ -202,6 +246,15 @@ export class MarshalTasksTool {
       },
     };
 
+    // Validate dependencies
+    if (task.dependencies.length > 0) {
+      const allTasks = await this.getAllTasks(task.initiativeId);
+      const dependencyViolations = await this.validateDependencies(task, allTasks);
+      if (dependencyViolations.length > 0) {
+        throw new ValidationError('Dependency validation failed', { violations: dependencyViolations });
+      }
+    }
+
     await this.journal.append(task.initiativeId, {
       operation: 'create_task',
       initiativeId: task.initiativeId,
@@ -212,6 +265,13 @@ export class MarshalTasksTool {
 
     await this.filesystem.writeTask(task);
     await this.journal.markComplete(task.initiativeId, requestId);
+
+    this._logger.info('Task created successfully', { 
+      taskId, 
+      title: task.title,
+      priority: task.priority,
+      requestId 
+    });
 
     return {
       success: true,
@@ -238,7 +298,7 @@ export class MarshalTasksTool {
       throw new NotFoundError('Task', params.task.id);
     }
 
-    const updatedTask = {
+    const updatedTask: Task = {
       ...existingTask,
       ...params.task,
       id: existingTask.id,
@@ -246,6 +306,15 @@ export class MarshalTasksTool {
       updatedAt: new Date(),
       createdAt: existingTask.createdAt,
     };
+
+    // Validate dependencies if changed
+    if (updatedTask.dependencies !== existingTask.dependencies) {
+      const allTasks = await this.getAllTasks(updatedTask.initiativeId);
+      const dependencyViolations = await this.validateDependencies(updatedTask, allTasks);
+      if (dependencyViolations.length > 0) {
+        throw new ValidationError('Dependency validation failed', { violations: dependencyViolations });
+      }
+    }
 
     await this.journal.append(updatedTask.initiativeId, {
       operation: 'update_task',
@@ -257,6 +326,11 @@ export class MarshalTasksTool {
 
     await this.filesystem.writeTask(updatedTask);
     await this.journal.markComplete(updatedTask.initiativeId, requestId);
+
+    this._logger.info('Task updated successfully', { 
+      taskId: updatedTask.id,
+      requestId 
+    });
 
     return {
       success: true,
@@ -302,29 +376,40 @@ export class MarshalTasksTool {
     await this.filesystem.writeTask(task);
     await this.journal.markComplete(task.initiativeId, requestId);
 
+    this._logger.info('Task assigned successfully', { 
+      taskId: task.id,
+      assignee: task.assignee,
+      requestId 
+    });
+
     return {
       success: true,
       data: task,
       metadata: {
         timestamp: new Date(),
         requestId,
-        sessionId: params.sessionId,
-      },
-    };
-  }
-
-  private async completeTask(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    if (this.rollbackMode) {
-      return await this.completeTaskInMemory(params, requestId);
-    }
-
     if (!params.task?.id || !params.task?.initiativeId) {
       throw new ValidationError('Task ID and initiativeId are required for completion');
     }
 
-    const task = await this.filesystem.readTask(params.task.initiativeId, params.task.id);
-    if (!task) {
-      throw new NotFoundError('Task', params.task.id);
+    const task = this.tasks.get(params.task.id);
+    if (!task) throw new NotFoundError('Task', params.task.id);
+    }
+
+    // Check if all dependencies are completed
+    const dependencies = await this.filesystem.readDependencies(params.task.initiativeId);
+    const taskDependencies = dependencies.filter(d => d.to === task.id);
+    const allTasks = await this.getAllTasks(task.initiativeId);
+    
+    const incompleteDependencies = taskDependencies.filter(dep => {
+      const depTask = allTasks.find(t => t.id === dep.from);
+      return depTask && depTask.status !== 'completed';
+    });
+
+    if (incompleteDependencies.length > 0) {
+      throw new ValidationError('Cannot complete task with incomplete dependencies', {
+        incompleteDependencies: incompleteDependencies.map(d => d.from)
+      });
     }
 
     task.status = 'completed';
@@ -346,6 +431,11 @@ export class MarshalTasksTool {
     await this.filesystem.writeTask(task);
     await this.journal.markComplete(task.initiativeId, requestId);
 
+    this._logger.info('Task completed successfully', { 
+      taskId: task.id,
+      requestId 
+    });
+
     return {
       success: true,
       data: task,
@@ -363,17 +453,32 @@ export class MarshalTasksTool {
     }
 
     const tasks = await this.getAllTasks(params.filters.initiativeId);
+    const dependencies = await this.filesystem.readDependencies(params.filters.initiativeId);
+    
+    this.dependencies.loadContracts(dependencies);
+    
+    const cycles = this.dependencies.detectCycles(tasks.map(t => t.id));
+    const overdueTasks = this.getOverdueTasks(tasks);
+    const upcomingDeadlines = this.getUpcomingDeadlines(tasks);
     
     const analysis = {
       totalTasks: tasks.length,
       byStatus: this.groupByStatus(tasks),
       byPriority: this.groupByPriority(tasks),
       byAssignee: this.groupByAssignee(tasks),
-      overdueTasks: this.getOverdueTasks(tasks).length,
-      upcomingDeadlines: this.getUpcomingDeadlines(tasks).length,
+      overdueTasks: overdueTasks.length,
+      upcomingDeadlines: upcomingDeadlines.length,
+      cycles: cycles.length,
+      blockedTasks: tasks.filter(t => this.dependencies.getBlockedTasks(t.id).length > 0).length,
       averageCompletionTime: this.calculateAverageCompletionTime(tasks),
-      recommendations: this.generateRecommendations(tasks),
+      recommendations: await this.generateRecommendations(tasks, cycles),
     };
+
+    this._logger.info('Task analysis completed', { 
+      totalTasks: analysis.totalTasks,
+      cycles: analysis.cycles,
+      requestId 
+    });
 
     return {
       success: true,
@@ -407,6 +512,12 @@ export class MarshalTasksTool {
       },
     };
 
+    this._logger.info('Tasks listed successfully', { 
+      totalTasks: filteredTasks.length,
+      returnedTasks: paginatedTasks.length,
+      requestId 
+    });
+
     return {
       success: true,
       data: response,
@@ -418,13 +529,13 @@ export class MarshalTasksTool {
     };
   }
 
-  private async getAllTasks(initiativeId: string): Promise<any[]> {
+  private async getAllTasks(initiativeId: string): Promise<Task[]> {
     if (this.rollbackMode) {
       return Array.from(this.tasks.values()).filter(t => t.initiativeId === initiativeId);
     }
     
     const taskIds = await this.filesystem.listTasks(initiativeId);
-    const tasks: any[] = [];
+    const tasks: Task[] = [];
     
     for (const taskId of taskIds) {
       const task = await this.filesystem.readTask(initiativeId, taskId);
@@ -434,7 +545,34 @@ export class MarshalTasksTool {
     return tasks;
   }
 
-  private filterTasks(tasks: any[], filters?: any): any[] {
+  private async validateDependencies(task: Task, allTasks: Task[]): Promise<string[]> {
+    const violations: string[] = [];
+    
+    // Check for cycles
+    const contracts: DependencyContract[] = [];
+    for (const depId of task.dependencies) {
+      contracts.push({
+        from: depId,
+        to: task.id,
+        relationshipType: 'depends-on',
+        autonomy: { requiresManualApproval: false }
+      });
+    }
+    
+    this.dependencies.loadContracts(contracts);
+    const cycles = this.dependencies.detectCycles(allTasks.map(t => t.id));
+    if (cycles.length > 0) {
+      violations.push('Circular dependencies detected');
+    }
+    
+    // Check chronological order
+    const chronologicalViolations = this.dependencies.validateChronologicalOrder(allTasks);
+    violations.push(...chronologicalViolations);
+    
+    return violations;
+  }
+
+  private filterTasks(tasks: Task[], filters?: any): Task[] {
     let filtered = tasks;
     
     if (!filters) return filtered;
@@ -460,7 +598,7 @@ export class MarshalTasksTool {
     return filtered;
   }
 
-  private groupByStatus(tasks: any[]): Record<string, number> {
+  private groupByStatus(tasks: Task[]): Record<string, number> {
     const groups: Record<string, number> = {};
     tasks.forEach(task => {
       groups[task.status] = (groups[task.status] || 0) + 1;
@@ -468,7 +606,7 @@ export class MarshalTasksTool {
     return groups;
   }
 
-  private groupByPriority(tasks: any[]): Record<string, number> {
+  private groupByPriority(tasks: Task[]): Record<string, number> {
     const groups: Record<string, number> = {};
     tasks.forEach(task => {
       groups[task.priority] = (groups[task.priority] || 0) + 1;
@@ -476,7 +614,7 @@ export class MarshalTasksTool {
     return groups;
   }
 
-  private groupByAssignee(tasks: any[]): Record<string, number> {
+  private groupByAssignee(tasks: Task[]): Record<string, number> {
     const groups: Record<string, number> = {};
     tasks.forEach(task => {
       if (task.assignee) {
@@ -486,7 +624,7 @@ export class MarshalTasksTool {
     return groups;
   }
 
-  private getOverdueTasks(tasks: any[]): any[] {
+  private getOverdueTasks(tasks: Task[]): Task[] {
     const now = new Date();
     return tasks.filter(task => 
       task.dueDate && 
@@ -495,7 +633,7 @@ export class MarshalTasksTool {
     );
   }
 
-  private getUpcomingDeadlines(tasks: any[]): any[] {
+  private getUpcomingDeadlines(tasks: Task[]): Task[] {
     const now = new Date();
     const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     
@@ -507,7 +645,7 @@ export class MarshalTasksTool {
     );
   }
 
-  private calculateAverageCompletionTime(tasks: any[]): number {
+  private calculateAverageCompletionTime(tasks: Task[]): number {
     const completedTasks = tasks.filter(task => task.status === 'completed');
     
     if (completedTasks.length === 0) {
@@ -522,8 +660,12 @@ export class MarshalTasksTool {
     return totalTime / completedTasks.length;
   }
 
-  private generateRecommendations(tasks: any[]): string[] {
+  private async generateRecommendations(tasks: Task[], cycles: string[][]): Promise<string[]> {
     const recommendations: string[] = [];
+    
+    if (cycles.length > 0) {
+      recommendations.push(`Found ${cycles.length} circular dependencies that need resolution`);
+    }
     
     const overdueTasks = this.getOverdueTasks(tasks);
     if (overdueTasks.length > 0) {
@@ -542,88 +684,22 @@ export class MarshalTasksTool {
       recommendations.push(`${unassignedTasks.length} tasks are unassigned and may need attention`);
     }
     
+    const blockedTasks = tasks.filter(t => this.dependencies.getBlockedTasks(t.id).length > 0);
+    if (blockedTasks.length > 0) {
+      recommendations.push(`${blockedTasks.length} tasks are blocked by dependencies`);
+    }
+    
     return recommendations;
   }
 
-  private async parseNaturalLanguageTask(naturalLanguage: string): Promise<any> {
-    const sanitizedInput = ValidationUtils.validateNaturalLanguage(naturalLanguage);
-    
-    return {
-      title: sanitizedInput.substring(0, 50).trim() + (sanitizedInput.length > 50 ? '...' : ''),
-      description: sanitizedInput,
-      priority: 'medium',
-      tags: [],
-    };
-  }
-
   // In-memory fallback methods for rollback mode
-  private async createTaskInMemory(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    const taskId = uuidv4();
-    const task = {
-      id: taskId,
-      title: params.task?.title || 'Untitled Task',
-      description: params.task?.description,
-      priority: params.task?.priority || 'medium',
-      status: 'pending',
-      assignee: params.task?.assignee,
-      dueDate: params.task?.dueDate ? new Date(params.task.dueDate) : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      tags: params.task?.tags || [],
-      projectId: params.task?.projectId,
-      dependencies: params.task?.dependencies || [],
-      initiativeId: params.task?.initiativeId || 'default',
-      metadata: { requestId },
-    };
+  private tasks: Map<string, Task> = new Map();
 
-    this.tasks.set(taskId, task);
 
-    return {
-      success: true,
-      data: task,
-      metadata: { timestamp: new Date(), requestId },
-    };
-  }
 
-  private async updateTaskInMemory(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    const task = this.tasks.get(params.task!.id!);
-    if (!task) throw new NotFoundError('Task', params.task!.id!);
 
-    const updatedTask = { ...task, ...params.task, updatedAt: new Date() };
-    this.tasks.set(task.id, updatedTask);
 
-    return {
-      success: true,
-      data: updatedTask,
-      metadata: { timestamp: new Date(), requestId },
-    };
-  }
-
-  private async assignTaskInMemory(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    const task = this.tasks.get(params.task!.id!);
-    if (!task) throw new NotFoundError('Task', params.task!.id!);
-
-    task.assignee = params.task!.assignee;
-    task.updatedAt = new Date();
-
-    return {
-      success: true,
-      data: task,
-      metadata: { timestamp: new Date(), requestId },
-    };
-  }
-
-  private async completeTaskInMemory(params: MarshalTasksParams, requestId: string): Promise<TaskMarshalResponse> {
-    const task = this.tasks.get(params.task!.id!);
-    if (!task) throw new NotFoundError('Task', params.task!.id!);
-
-    task.status = 'completed';
-    task.updatedAt = new Date();
-
-    return {
-      success: true,
-      data: task,
-      metadata: { timestamp: new Date(), requestId },
-    };
-  }
+  /**
+   * Generate AI-powered recommendations
+   */
 }

@@ -21,24 +21,18 @@ export interface Task {
   updatedAt: Date;
   tags: string[];
   projectId?: string;
-  dependencies: string[];
-  metadata: Record<string, unknown>;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  status: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled';
-  timeline?: {
-    startDate: Date;
-    endDate: Date;
-  };
-  team: string[];
-  milestones: Milestone[];
-  createdAt: Date;
-  updatedAt: Date;
-  metadata: Record<string, unknown>;
+  dependencies?: string[];
+  initiativeId?: string;
+  parentTaskId?: string;
+  subtasks?: any[];
+  governanceState?: string;
+  visualPriority?: number;
+  insightCards?: string[];
+  narrativeContext?: string;
+  aiSignals?: string[];
+  team?: string[];
+  milestones?: Milestone[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface Milestone {
@@ -104,6 +98,7 @@ export interface TaskFilters {
   assignee?: string[];
   projectId?: string[];
   tags?: string[];
+  initiativeId?: string;
   dueDate?: {
     from?: Date;
     to?: Date;
@@ -116,6 +111,16 @@ export interface MarshalProjectsParams {
   analysisType?: 'progress' | 'risks' | 'resources' | 'dependencies';
   sessionId?: string;
   filters?: ProjectFilters;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: 'active' | 'on-hold' | 'completed' | 'cancelled';
+  team: string[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ProjectFilters {

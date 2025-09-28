@@ -60,7 +60,7 @@ Add the following secrets to your GitHub repository:
 
 The GitHub Actions workflow automatically publishes to both registries when:
 - Pushing to the `main` branch
-- Creating a version tag (e.g., `v1.0.0`)
+- Creating a version tag (e.g., `v1.1.0`)
 - Manual workflow dispatch
 
 **Trigger automated publishing:**
@@ -69,8 +69,8 @@ The GitHub Actions workflow automatically publishes to both registries when:
 git push origin main
 
 # Or create a version tag
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.1.0
+git push origin v1.1.0
 ```
 
 ### Method 2: Manual Publishing
@@ -110,13 +110,13 @@ npm run publish:both
 Use the version management scripts:
 
 ```bash
-# Patch version (1.0.0 -> 1.0.1)
+# Patch version (1.1.0 -> 1.1.1)
 npm run version:patch
 
-# Minor version (1.0.0 -> 1.1.0)
+# Minor version (1.1.0 -> 1.2.0)
 npm run version:minor
 
-# Major version (1.0.0 -> 2.0.0)
+# Major version (1.1.0 -> 2.0.0)
 npm run version:major
 ```
 

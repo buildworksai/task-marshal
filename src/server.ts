@@ -28,11 +28,13 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.simple()
-    })
-  ]
+    transports: [
+      new winston.transports.Console({
+        format: winston.format.simple(),
+        // Redirect only error and warn to STDERR, keep info+ on STDOUT for MCP compatibility
+        stderrLevels: ['error', 'warn']
+      })
+    ]
 });
 
 // Simple tool definitions
@@ -201,7 +203,7 @@ const tools: Tool[] = [
 const server = new Server(
   {
     name: 'task-marshal',
-    version: '1.0.6',
+    version: '1.1.0',
   },
   {
     capabilities: {
@@ -239,7 +241,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         requestId
       },
       metadata: {
-        version: '1.0.6',
+        version: '1.1.0',
         buildworks: 'BuildWorks.AI Task-Marshal MCP Server'
       }
     };

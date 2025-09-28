@@ -103,6 +103,55 @@ export class ValidationUtils {
   }
 
   /**
+   * Validate initiative ID
+   */
+  static validateInitiativeId(initiativeId: string): void {
+    if (!initiativeId || typeof initiativeId !== 'string') {
+      throw new ValidationError('initiativeId must be a non-empty string');
+    }
+    
+    if (initiativeId.length < 3 || initiativeId.length > 50) {
+      throw new ValidationError('initiativeId must be between 3 and 50 characters');
+    }
+    
+    if (!/^[a-zA-Z0-9_-]+$/.test(initiativeId)) {
+      throw new ValidationError('initiativeId can only contain letters, numbers, hyphens, and underscores');
+    }
+  }
+
+  /**
+   * Validate task priority
+   */
+  static validateTaskPriority(priority: string): 'low' | 'medium' | 'high' | 'critical' {
+    const validPriorities = ['low', 'medium', 'high', 'critical'] as const;
+    
+    if (!validPriorities.includes(priority as any)) {
+      throw new ValidationError('Invalid task priority', {
+        priority,
+        validPriorities,
+      });
+    }
+    
+    return priority as 'low' | 'medium' | 'high' | 'critical';
+  }
+
+  /**
+   * Validate governance state
+   */
+  static validateGovernanceState(state: string): string {
+    const validStates = ['draft', 'review', 'approved', 'blocked', 'completed'];
+    
+    if (!validStates.includes(state)) {
+      throw new ValidationError('Invalid governance state', {
+        state,
+        validStates,
+      });
+    }
+    
+    return state;
+  }
+
+  /**
    * Validate project data
    */
   static validateProject(project: unknown): void {
