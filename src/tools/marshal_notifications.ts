@@ -7,7 +7,7 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import winston from 'winston';
 import { TaskMarshalConfig, AuditLog } from '../types/index.js';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 export class MarshalNotificationsTool {
   constructor(
     private _config: TaskMarshalConfig,

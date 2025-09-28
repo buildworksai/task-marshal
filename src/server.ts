@@ -31,8 +31,8 @@ const logger = winston.createLogger({
     transports: [
       new winston.transports.Console({
         format: winston.format.simple(),
-        // Redirect only error and warn to STDERR, keep info+ on STDOUT for MCP compatibility
-        stderrLevels: ['error', 'warn']
+        // Redirect ALL log levels to STDERR so STDOUT stays protocol-clean for MCP
+        stderrLevels: ['error', 'warn', 'info', 'verbose', 'debug', 'silly']
       })
     ]
 });
@@ -203,7 +203,7 @@ const tools: Tool[] = [
 const server = new Server(
   {
     name: 'task-marshal',
-    version: '1.1.0',
+    version: '1.1.1',
   },
   {
     capabilities: {
@@ -241,7 +241,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         requestId
       },
       metadata: {
-        version: '1.1.0',
+        version: '1.1.1',
         buildworks: 'BuildWorks.AI Task-Marshal MCP Server'
       }
     };
